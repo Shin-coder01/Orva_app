@@ -1,5 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
+import i18n from './index';
 import en from './en.json';
 import ta from './ta.json';
 
@@ -20,5 +21,13 @@ describe('translation resources', () => {
   it('include a first-launch language choice in both languages', () => {
     expect(en.language.title).toBe('Choose your language');
     expect(ta.language.title).toBe('உங்கள் மொழியைத் தேர்ந்தெடுக்கவும்');
+  });
+
+  it('switches translations immediately without reinitializing', async () => {
+    await i18n.changeLanguage('ta');
+    expect(i18n.t('tabs.home')).toBe('முகப்பு');
+
+    await i18n.changeLanguage('en');
+    expect(i18n.t('tabs.home')).toBe('Home');
   });
 });

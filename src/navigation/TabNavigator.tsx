@@ -15,6 +15,7 @@ import { FamiliesScreen } from '../screens/FamiliesScreen';
 import { FunctionsScreen } from '../screens/FunctionsScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
+import { AppText } from '../components/AppText';
 import { colors, radii, spacing } from '../theme';
 import type { MainTabParamList } from './types';
 
@@ -53,11 +54,14 @@ export function TabNavigator() {
         const isAdd = route.name === 'Add';
         return {
           headerShown: false,
-          tabBarLabel: labels[route.name],
+          tabBarLabel: ({ color }) => (
+            <AppText variant="tab" style={[styles.label, { color }]}>
+              {labels[route.name]}
+            </AppText>
+          ),
           tabBarAccessibilityLabel: accessibility[route.name],
           tabBarActiveTintColor: colors.primary,
           tabBarInactiveTintColor: colors.muted,
-          tabBarLabelStyle: styles.label,
           tabBarItemStyle: styles.item,
           tabBarStyle: styles.bar,
           tabBarIcon: ({ color, focused }) =>
@@ -93,9 +97,9 @@ const styles = StyleSheet.create({
     minHeight: 58,
   },
   label: {
-    fontSize: 13,
     marginTop: 2,
     paddingBottom: 1,
+    textAlign: 'center',
   },
   addButton: {
     alignItems: 'center',
