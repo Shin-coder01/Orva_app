@@ -1,0 +1,42 @@
+{
+  "language": {
+    "title": "Choose your language",
+    "description": "A calm place to keep your family's function history.",
+    "english": "English",
+    "tamil": "தமிழ்"
+  },
+  "tabs": {
+    "home": "Home",
+    "families": "Families",
+    "add": "Add",
+    "functions": "Functions",
+    "settings": "Settings",
+    "homeAccess": "Open Home",
+    "familiesAccess": "Open Families",
+    "addAccess": "Add a family record",
+    "functionsAccess": "Open Functions",
+    "settingsAccess": "Open Settings"
+  },
+  "screens": {
+    "home": {
+      "title": "Home",
+      "empty": "Your family's function history will appear here."
+    },
+    "families": {
+      "title": "Families",
+      "empty": "Families you add will appear here."
+    },
+    "add": {
+      "title": "Add",
+      "empty": "New family and function records will start here."
+    },
+    "functions": {
+      "title": "Functions",
+      "empty": "Recorded family functions will appear here."
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language"
+  }
+}

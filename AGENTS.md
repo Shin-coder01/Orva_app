@@ -1,3 +1,18 @@
+# Orva Project Instructions
+
+Read SPEC.md for the product requirements, security rules, architecture, and phased build order. Read DESIGN_BRIEF.md for the mobile UX requirements.
+
+## Working rules
+
+- Build one phase at a time as defined in SPEC.md Section 16. Stop after each phase with a concise report; do not begin another phase until asked.
+- The app name is Orva. Keep Murai Kanakku as a description of the traditional notebook practice, not as the app's name.
+- Use Expo, React Native, strict TypeScript, and React Navigation (native stack and bottom tabs). The generated Expo Router guidance below does not apply.
+- Put every user-visible string, including accessibility labels, in both src/i18n/en.json and src/i18n/ta.json.
+- Keep UI screens thin. Follow the domain, repository, cloud, and sync boundaries in SPEC.md.
+- Never add payment features, amount suggestions, charts, or language implying debt.
+- Keep secrets out of source control. Cloud credentials must come from environment variables; never use a service-role key in the app.
+- Use Expo-compatible package versions for native modules. Run the requested phase checks before reporting completion.
+
 This is an Expo/React Native mobile application. Prioritize mobile-first patterns, performance, and cross-platform compatibility.
 
 ## Expo has changed — do not trust your training data
