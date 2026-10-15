@@ -13,6 +13,10 @@
     },
     "android": {
       "package": "com.orva.familybook",
+      "allowBackup": false,
+      "permissions": [
+        "android.permission.SCHEDULE_EXACT_ALARM"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#F4F6F2",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -25,7 +29,30 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-font"
-    ]
+      "expo-font",
+      "expo-sqlite",
+      "expo-secure-store",
+      "expo-sharing",
+      "@react-native-community/datetimepicker",
+      [
+        "expo-notifications",
+        {
+          "color": "#245B52",
+          "defaultChannel": "orva-reminders"
+        }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Orva uses Face ID to unlock your family notebook."
+        }
+      ],
+      "expo-asset"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "be5103a4-38cb-4ced-9057-c1df6ca91911"
+      }
+    }
   }
 }

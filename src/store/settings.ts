@@ -20,6 +20,9 @@ export const useSettingsStore = create<SettingsState>()(
       setLanguage: (language) => {
         void i18n.changeLanguage(language);
         set({ language });
+        void import('../services/notifications').then(({ rescheduleAllInvitations }) =>
+          rescheduleAllInvitations(language),
+        ).catch(() => undefined);
       },
       finishHydration: () => set({ hasHydrated: true }),
     }),

@@ -27,5 +27,5 @@ export const typeScale = {
   section: { fontSize: 20, lineHeight: 30 },
   body: { fontSize: 18, lineHeight: 29 },
   label: { fontSize: 18, lineHeight: 28 },
-  tab: { fontSize: 13, lineHeight: 19 },
+  tab: { fontSize: 14, lineHeight: 20 },
 } as const;

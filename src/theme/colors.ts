@@ -8,6 +8,8 @@ export const colors = {
   primaryWash: '#E3EFEB',
   accent: '#A94F37',
   accentWash: '#F5E9E4',
+  danger: '#8A3B32',
+  dangerWash: '#F6E8E5',
   border: '#D8E0DC',
   white: '#FFFFFF',
 } as const;

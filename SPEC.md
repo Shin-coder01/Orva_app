@@ -2,7 +2,7 @@
 
 > Naming override: the app is named **Orva**. Murai Kanakku describes the traditional family-function notebook concept; it is not the app name.
 
-Build a mobile app called **Murai Kanakku** using **React Native (Expo) + TypeScript**, with a **local SQLite database** as the on-device source of truth and **Supabase** as the cloud backend (login, backup, restore, multi-device sync).
+Build a mobile app called **Orva** using **React Native (Expo) + TypeScript**, with a **local SQLite database** as the on-device source of truth and **Supabase** as the optional cloud backend (login, backup, restore, multi-device sync). Murai Kanakku describes the traditional notebook practice, not the app name.
 
 Save this document in the repository root as `SPEC.md`.
 
@@ -121,10 +121,14 @@ functionType       WEDDING | ENGAGEMENT | HOUSEWARMING | BABY_FUNCTION |
 functionName?      optional custom name
 direction          WE_GAVE | THEY_GAVE
 recordKind         MONEY            (GOLD and GIFT are added later)
-amount             positive integer rupees, required when recordKind = MONEY
+amount             integer rupees from 0 to 9999999, required when recordKind = MONEY
+addedBy?           display name of the person who entered the record, or null
 notes?
 createdAt, updatedAt, deletedAt?
 ```
+
+For a MONEY record, amount `0` means **didn't give**. Amounts are never negative.
+`addedBy` is populated automatically from the signed-in family-group member's display name; it is null when the notebook is not in a family group.
 
 ### Invitation (something coming up)
 
@@ -172,7 +176,8 @@ Deleting a Family, FunctionRecord or Invitation sets `deletedAt` (and `updatedAt
 
 ### Amounts
 
-- Integer rupees, greater than 0, maximum `9999999`.
+- Integer rupees from `0` through `9999999`.
+- Amount `0` means "didn't give" and adds nothing to totals, but the record still counts as a function.
 - Never store a negative amount. Direction decides whether it was given or received.
 - Write a helper `formatINR(n)` yourself using **Indian digit grouping**: `500 → ₹500`, `5000 → ₹5,000`, `100000 → ₹1,00,000`, `12345678 → ₹1,23,45,678`. Do not rely on `Intl` behaviour on the device. Unit test it.
 
@@ -187,10 +192,13 @@ calculateFamilyBalance(records: FunctionRecord[]): {
   difference: number;        // absolute value of (totalGiven - totalReceived)
   differenceDirection: "WE_GAVE_MORE" | "THEY_GAVE_MORE" | "EQUAL";
   recordCount: number;
+  theirFunctionCount: number; // records where direction = WE_GAVE
+  ourFunctionCount: number;   // records where direction = THEY_GAVE
 }
 ```
 
 - It ignores records with `deletedAt` set and records whose `recordKind` is not `MONEY`.
+- Function counts include amount-0 MONEY records; totals are unchanged by them.
 - It must not import React or anything from the database or cloud layers.
 - Reuse it everywhere. Never duplicate this logic in a screen.
 
@@ -205,7 +213,7 @@ Use whole-sentence translation keys with interpolation (`{{amount}}`). Do not bu
 
 ### Last they gave / Last we gave
 
-The most recent non-deleted MONEY record for each direction, using the sorting rule above. Show function label, date (respecting precision) and amount.
+`getLastRecords(records)` returns the most recent non-deleted MONEY record in each direction using the sorting rule above. Amount-0 records are eligible. Show function label, date (respecting precision), and amount; for amount 0 show "We didn't give" or "They didn't give", never "₹0".
 
 ### Function label
 
@@ -228,6 +236,8 @@ Expected: given **₹15,000**, received **₹10,000**, difference **₹5,000**, 
 Last they gave: Our brother wedding, 03 Oct 2026, ₹5,000.
 Last we gave: Their son wedding, 20 Jun 2026, ₹10,000.
 History order: 2026 (03 Oct, 20 Jun), then 2025 (shown as "2025" only), then 2024.
+
+The test-only Mohan Family fixture (not included in sample seeding) has a 2024-03-10 Wedding with `THEY_GAVE` amount 0 and a 2025-05-04 Housewarming with `WE_GAVE` amount 2000. Its expected counts are one function in each direction; the last `THEY_GAVE` record is the 2024 wedding and represents "They didn't give".
 
 ### Kumar Family
 
@@ -315,7 +325,7 @@ Order of fields, top to bottom:
 
 A typical record should need **no typing at all**: family, type, amount chip, direction, save.
 
-Validation: family required, direction required, amount a positive integer.
+Validation: family and direction required; amount is a whole number from 0 to 9999999.
 After save, return to the previous screen with totals already updated. Edit uses the same screen. Delete asks for confirmation.
 
 ---
@@ -384,10 +394,13 @@ Note the spelling **முறை** (with ற).
 - **PIN lock** (4 to 6 digits) with optional **biometric** unlock. Store only a salted hash of the PIN in `expo-secure-store`, never the PIN itself. Lock the app when it goes to the background for longer than a configurable time.
 - **File backup (works without login):** Settings → Backup file creates one JSON file `{ schemaVersion, exportedAt, families, records, invitations }` of non-deleted data and opens the system share sheet (WhatsApp, Drive, email, and so on).
 - **File restore:** pick a backup file, validate it with `zod` and `schemaVersion`, show the counts (families, records, invitations), ask for confirmation, then replace all local data **inside one transaction** and mark every row dirty. If anything fails, nothing changes.
+- **Change Request 1 compatibility:** schema version 2 includes `addedBy` and accepts amount 0. Restore accepts version 1 files without `addedBy`, normalizing that field to null. The file picker/share/transactional restore flow remains in Phase 7.
 - The backup file is **not encrypted**. Show a short warning that anyone who has the file can read it.
 - Notifications never include amounts.
 
 ---
+
+> Change Request 1 replaces the schema and family-group rules in this section. The active, owner-approved source is [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql); do not apply the legacy SQL below. The Edge Function is in `supabase/functions/delete-account/`.
 
 ## 13. Supabase backend
 
@@ -407,6 +420,8 @@ Note the spelling **முறை** (with ற).
 - Treat `server_updated_at` as an **opaque string**. Never convert it through a JavaScript `Date`, because that loses microsecond precision.
 
 ### Migration file: `supabase/migrations/0001_init.sql`
+
+Change Request 1 Phase D replaces this original schema with the family-group schema in that request. Do not apply the SQL below while Phase D is pending.
 
 ```sql
 -- ============ Tables ============
@@ -531,6 +546,8 @@ Do not change the meaning of this SQL without telling the owner. Fixing a genuin
 
 ---
 
+> Change Request 1 adds the family-group sync scope, `household_id`, group cursor resets, and member counts to this section. The current implementation is in `src/services/sync/` and `src/cloud/familyGroup.ts`.
+
 ## 14. Sync engine (`src/services/sync/`)
 
 Files: `SyncService.ts` (interface), `NoopSyncService.ts` (local-only mode), `SupabaseSyncService.ts`, `mappers.ts` (camelCase ↔ snake_case), `merge.ts` (pure merge logic), `syncState.ts`.
@@ -638,8 +655,8 @@ Expo + TypeScript (strict), development build setup, folder structure, Jest, bot
 
 ### Phase 1 — Domain and local database
 
-`domain/types.ts`, `format.ts` (`formatINR`, date display with precision), `balance.ts`, SQLite schema and migrations (including `isDirty` and `syncState`), `familyRepository` and `recordRepository` (soft delete), and a dev-only "Load sample data" action using Section 7.
-**Done when:** all unit tests pass, including the Section 7 expected totals, and loading the sample data produces the expected numbers.
+`domain/types.ts`, `format.ts` (`formatINR`, date display with precision), `balance.ts`, SQLite schema and migrations (including `isDirty` and `syncState`), `familyRepository` and `recordRepository` (soft delete), and a dev-only "Load sample data" action using Section 7. Change Request 1 Phase A additionally allows amount 0, adds `addedBy`, directional function counts, `getLastRecords`, and migration tests that preserve rows from the previous schema.
+**Done when:** all unit tests pass, including the Section 7 expected totals, the Change Request 1 Mohan fixture, and the migration-from-old-schema test; loading the sample data produces the expected numbers.
 
 ### Phase 2 — Add Family and Add Record
 
@@ -712,7 +729,7 @@ Use the **default** until the product owner decides otherwise.
 2. **Tiny differences.** A difference of ₹1 would show "We gave ₹1 more". Default: always show the exact difference, with no interpretation by the app.
 3. **File restore behaviour.** Default: restore **replaces** local data after confirmation. Merging is a later feature.
 4. **Login method.** Default: email one-time code. Phone-number login is more familiar in India but needs an SMS provider and has a per-message cost.
-5. **Store listing.** Many families call the notebook "moi". Consider mentioning "moi" in the store description even if the app is named Murai Kanakku.
+5. **Store listing.** Many families call the notebook "moi". Consider mentioning "moi" in the store description while keeping the app name Orva.
 
 ---
 
@@ -726,7 +743,7 @@ Use the **default** until the product owner decides otherwise.
 6. Run `supabase functions deploy delete-account`.
 7. Copy the project URL and anon/publishable key into a local `.env` file as `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY`. Never use the service role key in the app.
 8. Build a development client with EAS and test on a real phone.
-9. Write a short privacy policy that says family records are stored in the cloud when the user signs in, and publish it at a public URL (app stores require this).
+9. Review `docs/privacy-policy.md` and `docs/delete-account.md`, then publish both at public URLs (app stores require these links).
 
 Note for the owner: as the project owner you can read the data in the Supabase dashboard. Data is encrypted on disk by Supabase, but it is not end-to-end encrypted. Say this plainly in the privacy policy, and treat the dashboard access as sensitive.
 
